@@ -1,0 +1,482 @@
+/*
+ * Copyright (c) 2021 OpenFTC Team
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.openftc.apriltag.AprilTagDetection;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
+
+import java.util.ArrayList;
+
+@Autonomous
+public class AutoOpenCVLeft extends LinearOpMode
+{
+    OpenCvCamera camera;
+    AprilTagDetectionPipeline aprilTagDetectionPipeline;
+    Hardware robot = Hardware.getInstance();
+
+
+    static final double FEET_PER_METER = 3.28084;
+
+    // Lens intrinsics
+    // UNITS ARE PIXELS
+    // NOTE: this calibration is for the C920 webcam at 800x448.
+    // You will need to do your own calibration for other configurations!
+    double fx = 578.272;
+    double fy = 578.272;
+    double cx = 402.145;
+    double cy = 221.506;
+
+    // UNITS ARE METERS
+    double tagsize = 0.166;
+
+    //tag Ids of sleeve
+    int Left = 14;
+    int Middle = 15;
+    int Right = 16;
+
+    AprilTagDetection tagOfInterest = null;
+
+    @Override
+    public void runOpMode()
+    {
+        robot.init(hardwareMap);
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+        aprilTagDetectionPipeline = new AprilTagDetectionPipeline(tagsize, fx, fy, cx, cy);
+
+        camera.setPipeline(aprilTagDetectionPipeline);
+        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
+        {
+            @Override
+            public void onOpened()
+            {
+                camera.startStreaming(800,448, OpenCvCameraRotation.UPRIGHT);
+            }
+
+            @Override
+            public void onError(int errorCode)
+            {
+
+            }
+        });
+
+        telemetry.setMsTransmissionInterval(50);
+
+        /*
+         * The INIT-loop:
+         * This REPLACES waitForStart!
+         */
+        while (!isStarted() && !isStopRequested())
+        {
+            ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
+
+            if(currentDetections.size() != 0)
+            {
+                boolean tagFound = false;
+
+                for(AprilTagDetection tag : currentDetections)
+                {
+                    if(tag.id == Left || tag.id == Middle || tag.id == Right)
+                    {
+                        tagOfInterest = tag;
+                        tagFound = true;
+                        break;
+                    }
+                }
+
+                if(tagFound)
+                {
+                    telemetry.addLine("Tag of interest is in sight!\n\nLocation data:");
+                    tagToTelemetry(tagOfInterest);
+                }
+                else
+                {
+                    telemetry.addLine("Don't see tag of interest :(");
+
+                    if(tagOfInterest == null)
+                    {
+                        telemetry.addLine("(The tag has never been seen)");
+                    }
+                    else
+                    {
+                        telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
+                        tagToTelemetry(tagOfInterest);
+                    }
+                }
+
+            }
+            else
+            {
+                telemetry.addLine("Don't see tag of interest :(");
+
+                if(tagOfInterest == null)
+                {
+                    telemetry.addLine("(The tag has never been seen)");
+                }
+                else
+                {
+                    telemetry.addLine("\nBut we HAVE seen the tag before; last seen at:");
+                    tagToTelemetry(tagOfInterest);
+                }
+
+            }
+
+            telemetry.update();
+            sleep(20);
+        }
+
+        /*
+         * The START command just came in: now work off the latest snapshot acquired
+         * during the init loop.
+         */
+
+        /* Update the telemetry */
+        if(tagOfInterest != null)
+        {
+            telemetry.addLine("Tag snapshot:\n");
+            tagToTelemetry(tagOfInterest);
+            telemetry.update();
+        }
+        else
+        {
+            telemetry.addLine("No tag snapshot available, it was never sighted during the init loop :(");
+            telemetry.update();
+        }
+
+        /* Actually do something useful */
+        if(tagOfInterest.id == Left) {
+            Forward(-27,.85);
+            TurnLeft(-21,.85);
+            Forward(-21,.85);
+            //left code
+            /*Forward(-47,.85);
+            TurnLeft(11.5,.85);
+            Lift(-29,.85);
+            Forward(-5.5,0.35);
+            Lift(10,.85);
+            robot.setclawPos(0.485);
+            //sleep(600);
+
+            Forward(5.5,0.7);
+            TurnRight(28,.85);
+            Lift(15,.85);
+            Forward(-23.25,.85);
+            robot.setclawPos(0.131);
+            sleep(600);
+            Lift(-4.5,.85);
+            Forward(24,.85);
+            TurnLeft(29,.85);
+            Lift(-21.5,.85);
+            Forward(-4,0.35);
+            Lift(10,.85);
+            robot.setclawPos(0.485);
+            //sleep(400);
+*/
+           /*Forward(5.5,0.7);
+           TurnRight(25.5,.85);
+           Lift(15.5,.85);
+           Forward(-25,.85);
+           robot.setclawPos(0.131);
+           sleep(600);
+           Lift(-4.5,.85);
+           Forward(24,.85);
+           TurnLeft(28.5,.85);
+           Lift(-21,.85);
+           Forward(-4,0.7);
+           robot.setclawPos(0.485);
+           Forward(5.5,0.7);*/
+            //add parking code (left) ~ 5 seconds
+            Forward(5.5,.5);
+            TurnLeft(11.5,.85);
+            Lift(13,.85);
+            Forward(-20,.85);
+
+
+
+        } else if(tagOfInterest == null || tagOfInterest.id == Middle) {
+            //middle code
+            Forward(-27,.85);
+            /*Forward(-47,.85);
+            TurnLeft(11.5,.85);
+            Lift(-29,.85);
+            Forward(-5.5,0.35);
+            Lift(10,.85);
+            robot.setclawPos(0.485);
+            //sleep(600);
+
+            Forward(5.5,0.7);
+            TurnRight(27.5,.85);
+            Lift(15,.85);
+            Forward(-23.25,.85);
+            robot.setclawPos(0.121);
+            sleep(600);
+            Lift(-4.5,.85);
+            Forward(24,.85);
+            TurnLeft(28,.85);
+            Lift(-21.5,.85);
+            Forward(-3,0.35);
+            Lift(10,.85);
+            robot.setclawPos(0.485);
+            //add parking code (middle) ~ 5 seconds
+            Forward(8,.4);
+*/
+
+
+        } else if(tagOfInterest.id == Right) {
+            Forward(-27,.85);
+            TurnRight(-21,.85);
+            Forward(-21,.85);
+            /*Forward(-47,.85);
+            TurnLeft(11.5,.85);
+            Lift(-29,.85);
+            Forward(-5.5,0.35);
+            Lift(10,.85);
+            robot.setclawPos(0.485);
+            //sleep(600);
+
+            Forward(5.5,0.7);
+            TurnRight(27.5,.85);
+            Lift(15,.85);
+            Forward(-23.25,.85);
+            robot.setclawPos(0.121);
+            sleep(600);
+            Lift(-4.5,.85);
+            Forward(24,.85);
+            TurnLeft(28,.85);
+            Lift(-21.5,.85);
+            Forward(-3,0.35);
+            Lift(10,.85);
+            robot.setclawPos(0.485);
+            //add parking code (right) ~ 5 seconds
+            Forward(5.5,.5);
+            TurnRight(27.5,.85);
+            Lift(13,.85);
+            Forward(-21,.85);
+*/
+
+        }
+
+        /* You wouldn't have this in your autonomous, this is just to prevent the sample from ending */
+        while (opModeIsActive()) {sleep(20);}
+    }
+
+    void tagToTelemetry(AprilTagDetection detection)
+    {
+        telemetry.addLine(String.format("\nDetected tag ID=%d", detection.id));
+        telemetry.addLine(String.format("Translation X: %.2f feet", detection.pose.x*FEET_PER_METER));
+        telemetry.addLine(String.format("Translation Y: %.2f feet", detection.pose.y*FEET_PER_METER));
+        telemetry.addLine(String.format("Translation Z: %.2f feet", detection.pose.z*FEET_PER_METER));
+        telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", Math.toDegrees(detection.pose.yaw)));
+        telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", Math.toDegrees(detection.pose.pitch)));
+        telemetry.addLine(String.format("Rotation Roll: %.2f degrees", Math.toDegrees(detection.pose.roll)));
+    }
+    public void Forward(double distance, double speedMoving) {
+
+        robot.lf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        // finds the circumference of the wheel(line below)
+        double wheelCircumference = 3 * Math.PI;
+        //tells the gear ratio of the motor(line below);
+        double wheelMotor = 560;
+        //total ticks required to move your specified distance (line below)
+        double ticks = (distance * (wheelMotor / wheelCircumference));
+        //automatically rounds the number of ticks needed to move a certain distance to the nearest integer (1 line below )
+        int encoderPosition = ((int) Math.round(ticks));
+        while (!(Math.abs(robot.lf.getCurrentPosition() - encoderPosition) < 4)) {
+
+            robot.setPower(speedMoving, speedMoving, speedMoving, speedMoving);
+
+            robot.lf.setTargetPosition(encoderPosition);
+            robot.lb.setTargetPosition(encoderPosition);
+            robot.rf.setTargetPosition(encoderPosition);
+            robot.rb.setTargetPosition(encoderPosition);
+
+            robot.lf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.lb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.rf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.rb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+        }
+        robot.setPower(0, 0, 0, 0);
+
+        robot.lf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+
+    public void TurnLeft(double distance, double turnSpeed) {
+        //robot.lf.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //robot.lb.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //robot.rf.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //robot.rb.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //robot.lf.setDirection(DcMotorSimple.Direction.REVERSE);
+        //robot.lb.setDirection(DcMotorSimple.Direction.REVERSE);
+        robot.lf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        double wheelCircumference = 3 * Math.PI;
+
+        double wheelMotor = 560;
+
+        double ticks = (distance * (wheelMotor / wheelCircumference));
+
+        robot.lf.setDirection(DcMotorSimple.Direction.REVERSE);
+        robot.rb.setDirection(DcMotorSimple.Direction.FORWARD);
+        int encoderPosition = ((int) Math.round(ticks));
+
+        while (!(Math.abs(robot.lf.getCurrentPosition() - encoderPosition) < 4)) {
+
+            //double oppositeturnSpeed = -1.0 * turnSpeed;
+
+            robot.setPower(turnSpeed, turnSpeed, turnSpeed, turnSpeed);
+            //robot.lf.setPower(oppositeturnSpeed);
+            //robot.rf.setPower(turnSpeed);
+            //robot.lb.setPower(turnSpeed);
+            //robot.rb.setPower(oppositeturnSpeed);
+
+            telemetry.addData("rf", robot.rf.getPower());
+            telemetry.addData("lf", robot.lf.getPower());
+            telemetry.addData("lb", robot.lb.getPower());
+            telemetry.addData("rb", robot.rb.getPower());
+            telemetry.update();
+
+            robot.rf.setTargetPosition(encoderPosition);
+            robot.lf.setTargetPosition(encoderPosition);
+            robot.rb.setTargetPosition(encoderPosition);
+            robot.lb.setTargetPosition(encoderPosition);
+
+            robot.rf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.lf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.rb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.lb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }
+
+        robot.setPower(0, 0, 0, 0);
+
+        robot.rf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        robot.lf.setDirection(DcMotorSimple.Direction.FORWARD);
+        robot.rb.setDirection(DcMotorSimple.Direction.REVERSE);
+        //robot.rf.setPower(0.5);
+        //robot.lf.setPower(0.5);
+        //robot.rb.setPower(0.5);
+        //robot.lb.setPower(0.5);
+        //sleep(1200);
+        //robot.lf.setDirection(DcMotorSimple.Direction.FORWARD);
+        //robot.lb.setDirection(DcMotorSimple.Direction.FORWARD);
+        //robot.rf.setPower(0);
+        //robot.lf.setPower(0);
+        //robot.rb.setPower(0);
+        //robot.lb.setPower(0);
+    }
+
+    public void TurnRight(double distance, double TurnSpeed) {
+
+        robot.lf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        double wheelCircumference = 3 * Math.PI;
+
+        double wheelMotor = 560;
+
+        double ticks = (distance * (wheelMotor / wheelCircumference));
+
+        robot.rf.setDirection(DcMotorSimple.Direction.FORWARD);
+        robot.lb.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        int encoderPosition = ((int) Math.round(ticks));
+
+        while (!(Math.abs(robot.lf.getCurrentPosition() - encoderPosition) < 4)) {
+
+            robot.setPower(TurnSpeed, -TurnSpeed, -TurnSpeed, TurnSpeed);
+
+            robot.rf.setTargetPosition(encoderPosition);
+            robot.lf.setTargetPosition(encoderPosition);
+            robot.rb.setTargetPosition(encoderPosition);
+            robot.lb.setTargetPosition(encoderPosition);
+
+            robot.rf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.lf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.rb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.lb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }
+
+        robot.setPower(0, 0, 0, 0);
+
+        robot.rf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        robot.rf.setDirection(DcMotorSimple.Direction.REVERSE);
+        robot.lb.setDirection(DcMotorSimple.Direction.FORWARD);
+    }
+    public void Lift(double distance, double liftSpeed) {
+        robot.lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        double Liftmotor = 360;
+
+        double wheelCircumference = Math.PI;
+
+        double ticks = (distance * (Liftmotor / wheelCircumference));
+
+        int encoderPos = ((int) Math.round(ticks));
+
+        while (!(Math.abs(robot.lift.getCurrentPosition() - encoderPos) < 2.5)) {
+            telemetry.addData("encoder position",robot.lift.getCurrentPosition());
+            telemetry.addData("input encoder position", encoderPos);
+            telemetry.update();
+            robot.lift.setPower(liftSpeed);
+
+            robot.lift.setTargetPosition(encoderPos);
+
+            robot.lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        }
+
+        robot.lift.setPower(0);
+
+        robot.lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        robot.lift.isBusy();
+
+    }
+}
