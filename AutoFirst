@@ -1,0 +1,273 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+
+//shows what name appears on the control hub for the class (line below)
+@Autonomous (name = "AutoFirst")
+// defines class and lets me use code in the SDK (line below)
+public class AutoFirst extends LinearOpMode {
+    Hardware robot = Hardware.getInstance();
+    double ticks = 0;
+    String claw = "";
+
+    // adds my hardware class (line above and line two below)
+    public void runOpMode() throws InterruptedException {
+        robot.init(hardwareMap);
+        // addData tells what i want to appear on the control hub (line below)
+        //update sends to the control hub (line 2 below)
+        telemetry.addData("Status", "Intialized");
+        telemetry.update();
+        waitForStart();
+        //time class
+
+
+        //uses my method to move a specified distance at a specified speed (line below)
+        //Forward(-27,.4);
+        //robot.setclawPos(0.485);
+        Forward(-47,.85);
+        TurnLeft(10,.85);
+        Lift(-29,.85);
+        Forward(-7,0.4);
+        Lift(10,.85);
+        robot.setclawPos(0.485);
+        sleep(600);
+        Forward(8,0.4);
+        //left turn 90 degrees below
+        //Forward(-22,.4);
+        /*TurnRight(18.5,.85);
+        Lift(-4.3, .85);
+        Forward(-22.5,.85);
+        robot.setclawPos(0.141);
+        sleep(400);
+        Lift(-4.5,.85);
+        Forward(24,.85);
+        TurnLeft(28,.85);
+        Lift(-19.5,.7);
+        Forward(-5.5,0.4);
+        robot.setclawPos(0.485);
+        sleep(400);
+        Forward(8,0.4);
+*/
+        //sleep(50);
+        //right turn 90 degrees below
+        //TurnRight(19, .4);
+        //Lift(-5, .3);
+        //Forward(3,0.4);
+        //sleep(50);
+        /*robot.rf.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.lf.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.lb.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.rb.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.rf.setPower(0.5);
+        robot.lf.setPower(-0.5);
+        robot.rb.setPower(-0.5);
+        robot.lb.setPower(0.5);
+        sleep(1000);
+        robot.rf.setPower(0);
+        robot.lf.setPower(0);
+        robot.rb.setPower(0);
+        robot.lb.setPower(0);*/
+        telemetry.addData("is done?", "yes");
+        telemetry.update();
+
+    }
+
+    //creates a method and defines a set of precedures (line below)
+    public void Forward(double distance, double speedMoving) {
+
+        robot.lf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        // finds the circumference of the wheel(line below)
+        double wheelCircumference = 3 * Math.PI;
+        //tells the gear ratio of the motor(line below);
+        double wheelMotor = 560;
+        //total ticks required to move your specified distance (line below)
+        double ticks = (distance * (wheelMotor / wheelCircumference));
+        //automatically rounds the number of ticks needed to move a certain distance to the nearest integer (1 line below )
+        int encoderPosition = ((int) Math.round(ticks));
+        while (!(robot.lf.getCurrentPosition() == encoderPosition)) {
+
+            robot.setPower(speedMoving, speedMoving, speedMoving, speedMoving);
+
+            robot.lf.setTargetPosition(encoderPosition);
+            robot.lb.setTargetPosition(encoderPosition);
+            robot.rf.setTargetPosition(encoderPosition);
+            robot.rb.setTargetPosition(encoderPosition);
+
+            robot.lf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.lb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.rf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.rb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+        }
+        robot.setPower(0, 0, 0, 0);
+
+        robot.lf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+    }
+
+    public void TurnLeft(double distance, double turnSpeed) {
+        //robot.lf.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //robot.lb.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //robot.rf.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //robot.rb.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        //robot.lf.setDirection(DcMotorSimple.Direction.REVERSE);
+        //robot.lb.setDirection(DcMotorSimple.Direction.REVERSE);
+        robot.lf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        double wheelCircumference = 3 * Math.PI;
+
+        double wheelMotor = 560;
+
+        double ticks = (distance * (wheelMotor / wheelCircumference));
+
+        robot.lf.setDirection(DcMotorSimple.Direction.REVERSE);
+        robot.rb.setDirection(DcMotorSimple.Direction.FORWARD);
+        int encoderPosition = ((int) Math.round(ticks));
+
+        while (!(robot.lf.getCurrentPosition() == encoderPosition)) {
+
+            //double oppositeturnSpeed = -1.0 * turnSpeed;
+
+            robot.setPower(turnSpeed, turnSpeed, turnSpeed, turnSpeed);
+            //robot.lf.setPower(oppositeturnSpeed);
+            //robot.rf.setPower(turnSpeed);
+            //robot.lb.setPower(turnSpeed);
+            //robot.rb.setPower(oppositeturnSpeed);
+
+            telemetry.addData("rf", robot.rf.getPower());
+            telemetry.addData("lf", robot.lf.getPower());
+            telemetry.addData("lb", robot.lb.getPower());
+            telemetry.addData("rb", robot.rb.getPower());
+            telemetry.update();
+
+            robot.rf.setTargetPosition(encoderPosition);
+            robot.lf.setTargetPosition(encoderPosition);
+            robot.rb.setTargetPosition(encoderPosition);
+            robot.lb.setTargetPosition(encoderPosition);
+
+            robot.rf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.lf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.rb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.lb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }
+
+        robot.setPower(0, 0, 0, 0);
+
+        robot.rf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        robot.lf.setDirection(DcMotorSimple.Direction.FORWARD);
+        robot.rb.setDirection(DcMotorSimple.Direction.REVERSE);
+        //robot.rf.setPower(0.5);
+        //robot.lf.setPower(0.5);
+        //robot.rb.setPower(0.5);
+        //robot.lb.setPower(0.5);
+        //sleep(1200);
+        //robot.lf.setDirection(DcMotorSimple.Direction.FORWARD);
+        //robot.lb.setDirection(DcMotorSimple.Direction.FORWARD);
+        //robot.rf.setPower(0);
+        //robot.lf.setPower(0);
+        //robot.rb.setPower(0);
+        //robot.lb.setPower(0);
+    }
+
+    public void TurnRight(double distance, double TurnSpeed) {
+
+        robot.lf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        double wheelCircumference = 3 * Math.PI;
+
+        double wheelMotor = 560;
+
+        double ticks = (distance * (wheelMotor / wheelCircumference));
+
+        robot.rf.setDirection(DcMotorSimple.Direction.FORWARD);
+        robot.lb.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        int encoderPosition = ((int) Math.round(ticks));
+
+        while (!(robot.lf.getCurrentPosition() == encoderPosition)) {
+
+            robot.setPower(TurnSpeed, -TurnSpeed, -TurnSpeed, TurnSpeed);
+
+            robot.rf.setTargetPosition(encoderPosition);
+            robot.lf.setTargetPosition(encoderPosition);
+            robot.rb.setTargetPosition(encoderPosition);
+            robot.lb.setTargetPosition(encoderPosition);
+
+            robot.rf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.lf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.rb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.lb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }
+
+        robot.setPower(0, 0, 0, 0);
+
+        robot.rf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lf.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.rb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.lb.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        robot.rf.setDirection(DcMotorSimple.Direction.REVERSE);
+        robot.lb.setDirection(DcMotorSimple.Direction.FORWARD);
+    }
+
+    public void Lift(double distance, double liftSpeed) {
+        robot.lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        double Liftmotor = 360;
+
+        double wheelCircumference = Math.PI;
+
+        double ticks = (distance * (Liftmotor / wheelCircumference));
+
+        int encoderPos = ((int) Math.round(ticks));
+
+        while (!(robot.lift.getCurrentPosition() == encoderPos)) {
+
+            telemetry.addData("encoder position",robot.lift.getCurrentPosition());
+            telemetry.addData("input encoder position", encoderPos);
+            telemetry.update();
+            robot.lift.setPower(liftSpeed);
+
+            robot.lift.setTargetPosition(encoderPos);
+
+            robot.lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        }
+
+        robot.lift.setPower(0);
+
+        robot.lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        robot.lift.isBusy();
+
+    }
+
+    /*public void claw(String orientation) {
+        claw = orientation;
+        if(claw.equals("open")) {
+            robot.setclawPos(0.485);
+        }
+        if(claw.equals("close")) {
+            robot.setclawPos(0.181);
+        }
+    }*/
+}
