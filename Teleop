@@ -1,0 +1,95 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
+@TeleOp(name="The 400 Point TeleOp Program")
+
+public class Teleop extends LinearOpMode {
+    Hardware robot = Hardware.getInstance();
+    private ElapsedTime run = new ElapsedTime();
+
+
+    public void runOpMode() {
+       final double openclaw = 0.485;
+       final double closeclaw = 0.141;
+       final double liftup = 0.95;
+       final double liftdown = -0.95;
+        robot.init(hardwareMap);
+
+        waitForStart();
+        while (opModeIsActive()) {
+            /*drive = gamepad1.left_stick_y;
+            turn = gamepad1.right_stick_x / 3;
+            strafe = -gamepad1.left_stick_x;
+*/
+            //telemetry.addData("continous servo power", robot.wheel1.getPower());
+            //telemetry.addData("lift motor power", robot.lift.getPower());
+            telemetry.addData("gamepad2 right stick y", gamepad2.right_stick_y);
+            telemetry.addData("servo position", robot.claw.getPosition());
+            telemetry.addData("rf",robot.rf.getPower());
+            telemetry.addData("lf",robot.lf.getPower());
+            telemetry.addData("lb",robot.lb.getPower());
+            telemetry.addData("rb",robot.rb.getPower());
+            telemetry.update();
+
+            /*max = Math.max(Math.abs(drive - strafe - turn), Math.max(Math.abs(drive + strafe - turn),
+                    Math.max(Math.abs(drive + strafe + turn), Math.abs(drive + turn - strafe))));
+            double scaleFactor;
+            if (max < robot.maxSpeed) {
+                scaleFactor = 1;
+            } else {
+                scaleFactor = (robot.maxSpeed / max);
+            }
+            //scaleFactor = scaleFactor - [something]
+            scaleFactor *= (1 - Math.min(gamepad1.right_trigger, 0.95));
+            drive = adjust(drive);
+            turn = adjust(turn);
+            strafe = adjust(strafe);
+            robot.setPower(( - strafe - turn) * scaleFactor, (drive + strafe - turn) * scaleFactor,
+                    (drive + strafe + turn) * scaleFactor, (drive + turn - strafe) * scaleFactor);
+            */
+            //uses trigonometry to match unit circle to analog movement
+            double r = Math.hypot(gamepad1.left_stick_x, gamepad1.left_stick_y);
+            double robotAngle = Math.atan2(gamepad1.left_stick_y, gamepad1.left_stick_x) - Math.PI/4;
+            //slightly decreases strafing
+            double rightX = 0.9 * gamepad1.right_stick_x;
+            //stores power
+            double v1 = r * Math.cos(robotAngle) + rightX;
+            double v2 = r * Math.sin(robotAngle) - rightX;
+            double v3 = r * Math.sin(robotAngle) + rightX;
+            double v4 = r * Math.cos(robotAngle) - rightX;
+            //sets the power
+            robot.lf.setPower(v1);
+            robot.rf.setPower(v2);
+            robot.lb.setPower(v3);
+            robot.rb.setPower(v4);
+            //0.548 close claw
+            //0.165 open claw
+            //intake servo
+            if(gamepad2.right_bumper) {
+                robot.setclawPos(closeclaw);
+            } else if(gamepad2.left_bumper) {
+                robot.setclawPos(openclaw);
+            }
+            run.reset();
+            //lift
+            if(gamepad2.right_stick_y > 0) {
+                robot.liftsetPower(liftup);
+            }
+            else if(gamepad2.right_stick_y < 0) {
+                robot.liftsetPower(liftdown);
+            }
+            else{
+                robot.liftsetPower(0);
+            }
+            run.reset();
+        }
+
+    }
+}
