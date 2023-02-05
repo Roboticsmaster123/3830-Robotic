@@ -1,0 +1,168 @@
+package org.firstinspires.ftc.teamcode;
+
+import android.service.autofill.DateValueSanitizer;
+
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.hardware.modernrobotics.ModernRoboticsTouchSensor;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.Range;
+import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
+
+public class Hardware {
+
+    public BNO055IMU gyro;
+    public DcMotor rf;
+    public DcMotor rb;
+    public DcMotor lf;
+    public DcMotor lb;
+    public DcMotor lift;
+    //public CRServo wheel1;
+    public Servo claw;
+    //public DigitalChannel redLED;
+    //public DigitalChannel greenLED; 506 diff
+
+    String errorMsg;
+
+    private static Hardware myInstance = null;
+
+    public double maxSpeed = 1;
+
+    private Hardware() {
+    }
+
+    public static Hardware getInstance() {
+        if (myInstance == null) {
+            myInstance = new Hardware();
+        }
+        return myInstance;
+    }
+
+    public void init(HardwareMap hwMap) {
+
+        //right front
+        try {
+            rf = hwMap.get(DcMotor.class, "rf");
+            rf.setDirection(DcMotorSimple.Direction.REVERSE);
+            rf.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            rf.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            //rf.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            rf.setPower(0);
+        } catch (Exception p_exception) {
+            rf = null;
+        }
+
+        //right back
+        try {
+            rb = hwMap.get(DcMotor.class, "rb");
+            rb.setDirection(DcMotorSimple.Direction.REVERSE);
+            rb.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            // run using encoders or run with encoders
+            rb.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            //rb.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            rb.setPower(0);
+        } catch (Exception p_exception) {
+            rb = null;
+        }
+
+        //left front
+        try {
+            lf = hwMap.get(DcMotor.class, "lf");
+            //lf.setDirection(DcMotorSimple.Direction.REVERSE);
+            lf.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            lf.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            //lf.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            lf.setPower(0);
+        } catch (Exception p_exception) {
+            lf = null;
+        }
+
+        //left back
+        try {
+            lb = hwMap.get(DcMotor.class, "lb");
+            //lb.setDirection(DcMotorSimple.Direction.REVERSE);
+            lb.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            lb.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            //lb.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            lb.setPower(0);
+        } catch (Exception p_exception) {
+            lb = null;
+        }
+
+        //gyro
+        try {
+            gyro = hwMap.get(BNO055IMU.class, "gyro1");
+            BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+            parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+            parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+            parameters.loggingEnabled = true;
+            parameters.loggingTag = "Gyro1";
+            parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+            gyro.initialize(parameters);
+        } catch (Exception p_exception) {
+            gyro = null;
+        }
+
+
+        /*try {
+            wheel1 = hwMap.get(CRServo.class, "wheel1");
+        } catch (Exception p_exception) {
+            wheel1 = null;
+        }*/
+
+        try {
+            claw = hwMap.get(Servo.class, "claw");
+        } catch (Exception p_exception) {
+            claw = null;
+        }
+
+        try {
+            lift = hwMap.get(DcMotor.class,"lift");
+            lift.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            //arm.setDirection(DcMotorSimple.Direction.REVERSE);
+            lift.setPower(0);
+        } catch (Exception p_exception) {
+            lift = null;
+            errorMsg = "lift motor failed";
+        }
+
+
+    }
+
+    public void setPower(double fr, double br, double fl, double bl) {
+        if (rf != null) {
+            rf.setPower(Range.clip(fr, -maxSpeed, maxSpeed));
+        }
+        if (rb != null) {
+            rb.setPower(Range.clip(br, -maxSpeed, maxSpeed));
+        }
+        if (lf != null) {
+            lf.setPower(Range.clip(fl, -maxSpeed, maxSpeed));
+        }
+        if (lb != null) {
+            lb.setPower(Range.clip(bl, -maxSpeed, maxSpeed));
+        }
+    }
+
+    public void liftsetPower(double apow) {
+        if (lift != null) {
+            lift.setPower(apow);
+        }
+    }
+
+    public void setclawPos(double pos) {
+        if (claw != null) {
+            claw.setPosition(pos);
+        }
+    }
+
+}
